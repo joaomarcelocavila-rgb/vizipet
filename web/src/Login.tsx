@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Icon, IconName } from './components/Icon';
+import { InstallCard } from './components/Install';
 import { Avatar, ErrorNote, Skeleton } from './components/ui';
 import { ApiError, Role, SessionUser, api, session } from './lib/api';
 
@@ -59,6 +60,8 @@ export function Login({ onLogin }: { onLogin: (user: SessionUser) => void }) {
         </span>
         <Icon name="chevron" />
       </Link>
+
+      <InstallCard />
 
       <section className="login-panel">
         {!area ? (

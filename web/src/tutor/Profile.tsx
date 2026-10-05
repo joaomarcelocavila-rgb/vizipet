@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Icon, IconName } from '../components/Icon';
+import { InstallCard } from '../components/Install';
 import { TopBar } from '../components/Shell';
 import { Avatar, Empty, Skeleton } from '../components/ui';
 import { SessionUser, api } from '../lib/api';
@@ -45,6 +46,7 @@ export function Profile({ user, unread, onLogout }: { user: SessionUser; unread:
         <MenuLink to="/consultas" icon="calendar" label="Minhas consultas" />
         <MenuLink to="/campanhas" icon="megaphone" label="Campanhas oficiais" />
         <MenuLink to="/emergencia" icon="siren" label="Plantões 24h" />
+        <InstallCard compact />
         <button type="button" className="menu-item danger" onClick={onLogout}>
           <Icon name="logout" /> <span className="grow">Sair</span>
         </button>

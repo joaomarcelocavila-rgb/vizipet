@@ -475,3 +475,17 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--g
 .cta-decision { display: grid; grid-template-columns: 1fr 1fr; }
 .cta-decision > :last-child { grid-column: 1 / -1; }
 @media (min-width: 560px) { .cta-decision { grid-template-columns: auto auto 1fr; } .cta-decision > :last-child { grid-column: auto; } }
+
+/* ---------- instalação e modo app ---------- */
+.install-card { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px; text-align: left; border-radius: var(--radius); border: 1px solid color-mix(in srgb, var(--green) 35%, var(--line)); background: var(--green-soft); }
+.install-card .grow { display: flex; flex-direction: column; gap: 2px; }
+.install-card small { color: var(--muted); font-size: 0.82rem; }
+.install-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--green); color: var(--green-ink); flex: none; }
+.install-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 12px; }
+.install-steps svg { vertical-align: -3px; }
+.offline-note { display: flex; align-items: center; gap: 8px; }
+/* Instalado: sem seleção de texto acidental e sem "puxar para atualizar" do navegador. */
+@media (display-mode: standalone) {
+  body { overscroll-behavior-y: none; -webkit-user-select: none; user-select: none; }
+  input, textarea { -webkit-user-select: text; user-select: text; }
+}

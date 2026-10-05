@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { TopBar } from '../components/Shell';
 import { Avatar, ErrorNote, Field, Skeleton, useToast } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { InstallCard } from '../components/Install';
 import { ApiError, SessionUser, api } from '../lib/api';
 import type { OwnedProfessional } from '../lib/types';
 import { useLoad } from '../lib/useLoad';
@@ -65,6 +66,7 @@ export function Account({ user, unread, onLogout }: { user: SessionUser; unread:
       <div className="menu">
         <MenuLink to="/notificacoes" icon="bell" label="Notificações" badge={unread} />
         <MenuLink to="/clinica" icon="building" label="Minhas clínicas" />
+        <InstallCard compact />
       </div>
 
       <h3 className="section-title">Perfil profissional</h3>

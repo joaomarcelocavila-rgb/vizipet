@@ -1,18 +1,29 @@
 {
+  "id": "./",
   "name": "Vizipet",
   "short_name": "Vizipet",
   "description": "Consultas veterinárias e plantões 24h perto de você.",
   "lang": "pt-BR",
-  "start_url": "/",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#f7f4ee",
   "theme_color": "#1f5a43",
+  "categories": ["health", "lifestyle", "medical"],
   "icons": [
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f5a43'/%3E%3Ctext x='16' y='22' font-size='16' text-anchor='middle' fill='%23f7f4ee' font-family='Georgia'%3Ev%3C/text%3E%3C/svg%3E",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
-  "shortcuts": [{ "name": "Emergência", "url": "/emergencia" }]
+  "shortcuts": [
+    {
+      "name": "Emergência",
+      "short_name": "Emergência",
+      "description": "Plantões 24h mais perto",
+      "url": "./?tela=emergencia",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
 }

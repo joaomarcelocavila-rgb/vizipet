@@ -52,6 +52,17 @@ A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/
 
 Clínicas com `emergency24h = true` aparecem em `GET /api/v1/search/clinics?emergency=true&lat=..&lng=..`, da mais próxima para a mais distante. Ligar ou desligar esse campo numa clínica aprovada manda a clínica de volta para análise.
 
+### Instalar como aplicativo
+
+O app é um PWA: tem manifesto, ícones e service worker (`web/public/sw.js`). Com o app aberto pelo endereço `https`:
+
+- **Android (Chrome)**: aparece o cartão "Instalar o Vizipet" na tela de entrada ou no Perfil. Também dá pelo menu ⋮ → "Instalar app".
+- **iPhone (Safari)**: Compartilhar → "Adicionar à Tela de Início". O app mostra esse passo a passo.
+
+Instalado, ele abre em tela cheia, com ícone próprio e atalho "Emergência" (toque longo no ícone, no Android). Sem internet, a casca do app abre e a tela de emergência mostra a última lista de plantões salva, com os telefones. As respostas da API nunca ficam em cache.
+
+A demonstração é publicada no GitHub Pages pelo workflow `.github/workflows/pages.yml`. Na primeira vez, ative em Settings → Pages → Source: "GitHub Actions".
+
 Para ver a notificação de confirmação aparecer, rode o job da Outbox (`POST /api/v1/internal/jobs/outbox`) ou suba a API com `INTERNAL_JOBS=true`.
 
 ## Verificação antes do PR

@@ -3,11 +3,22 @@ import { Link } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { TopBar } from '../components/Shell';
 import { Empty, ErrorNote, Skeleton } from '../components/ui';
-import { Page, api, qs, session } from '../lib/api';
-import { fmtKm, fmtPhone } from '../lib/format';
+import { Page, api, qs, session, store } from '../lib/api';
+import { fmtDateTime, fmtKm, fmtPhone } from '../lib/format';
 import { mapsRoute, telHref, useGeolocation, wazeRoute } from '../lib/geo';
 import type { PublicClinic } from '../lib/types';
 import { useLoad } from '../lib/useLoad';
+
+// Última lista que deu certo: numa emergência sem sinal, ainda dá para ligar.
+const SAVED_KEY = 'vizipet.emergency.last';
+function readSaved(): { at: string; data: PublicClinic[] } | null {
+  try {
+    const raw = store.get(SAVED_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
 
 const FIRST_AID = [
   {
@@ -76,7 +87,11 @@ export function Emergency() {
     [waitingGeo, geo.coords?.lat, geo.coords?.lng],
   );
 
-  const clinics = data?.data ?? [];
+  useEffect(() => {
+    if (data) store.set(SAVED_KEY, JSON.stringify({ at: new Date().toISOString(), data: data.data }));
+  }, [data]);
+  const saved = !data && error ? readSaved() : null;
+  const clinics = data?.data ?? saved?.data ?? [];
   const nearest = clinics[0];
 
   return (
@@ -113,8 +128,18 @@ export function Emergency() {
         </a>
       )}
 
-      <ErrorNote error={error} onRetry={reload} />
-      {(loading || waitingGeo) && !data ? (
+      {saved ? (
+        <div className="note note-warn offline-note">
+          <Icon name="wifiOff" size={18} />
+          <span>
+            Sem internet. Mostrando a lista salva em {fmtDateTime(saved.at).toLowerCase()}; as ligações funcionam normalmente.{' '}
+            <button type="button" className="link" onClick={reload}>Tentar de novo</button>
+          </span>
+        </div>
+      ) : (
+        <ErrorNote error={error} onRetry={reload} />
+      )}
+      {(loading || waitingGeo) && !data && !saved ? (
         <Skeleton rows={3} />
       ) : clinics.length === 0 ? (
         <Empty icon="building" title="Nenhum plantão 24h cadastrado ainda.">Ligue para a clínica mais próxima ou procure o serviço público da sua cidade.</Empty>

@@ -5,11 +5,22 @@ import { isDemo } from './lib/api';
 import { App } from './App';
 import './styles.css';
 
+// Atalho "Emergência" do ícone do app (manifest) abre direto na tela de plantões.
+const shortcut = new URLSearchParams(window.location.search).get('tela') === 'emergencia';
+if (shortcut && !isDemo) window.history.replaceState(null, '', '/emergencia');
+
+// Guarda a casca do app para abrir rápido e funcionar sem internet.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => undefined);
+  });
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {/* No modo demonstração a página roda isolada, sem rotas reais no endereço. */}
     {isDemo ? (
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[shortcut ? '/emergencia' : '/']}>
         <App />
       </MemoryRouter>
     ) : (
