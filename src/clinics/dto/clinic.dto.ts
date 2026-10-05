@@ -1,5 +1,15 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsLatitude, IsLongitude, IsOptional, IsString, Length, Matches, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsLatitude,
+  IsLongitude,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 import { BRAZILIAN_STATES } from '../../common/dto/ufs';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
@@ -59,6 +69,10 @@ export class CreateClinicDto {
   @Transform(trim)
   @Matches(/^\d{3,10}\/[A-Za-z]{2}$/, { message: 'use o formato 12345/PE' })
   responsibleCrmv?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emergency24h?: boolean;
 }
 
 export class UpdateClinicDto {
@@ -120,4 +134,8 @@ export class UpdateClinicDto {
   @Transform(trim)
   @Matches(/^\d{3,10}\/[A-Za-z]{2}$/, { message: 'use o formato 12345/PE' })
   responsibleCrmv?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emergency24h?: boolean;
 }

@@ -19,6 +19,7 @@ const SENSITIVE_FIELDS = [
   'state',
   'responsibleVet',
   'responsibleCrmv',
+  'emergency24h',
 ] as const;
 
 @Injectable()
@@ -118,6 +119,7 @@ export class ClinicsService {
       state: clinic.state,
       latitude: toNumber(clinic.latitude),
       longitude: toNumber(clinic.longitude),
+      emergency24h: clinic.emergency24h,
     };
   }
 

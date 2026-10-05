@@ -1,5 +1,6 @@
 import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsIn,
   IsISO8601,
@@ -81,6 +82,25 @@ export class SearchClinicsQuery extends PaginationQuery {
   @IsString()
   @MaxLength(80)
   neighborhood?: string;
+
+  // ?emergency=true lista só clínicas com atendimento de urgência 24 horas.
+  @IsOptional()
+  @Transform(({ value }) =>
+    value === 'true' || value === true ? true : value === 'false' || value === false ? false : value,
+  )
+  @IsBoolean()
+  emergency?: boolean;
+
+  // Coordenadas só participam do cálculo de distância; não são gravadas nem logadas.
+  @IsOptional()
+  @Type(() => Number)
+  @IsLatitude()
+  lat?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsLongitude()
+  lng?: number;
 }
 
 export class PublicSlotsQuery {

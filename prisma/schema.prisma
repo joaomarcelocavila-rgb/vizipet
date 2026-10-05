@@ -229,6 +229,8 @@ model Clinic {
   longitude          Decimal?           @db.Decimal(9, 6)
   responsibleVet     String?            @map("responsible_vet")
   responsibleCrmv    String?            @map("responsible_crmv")
+  // Atende urgências 24 horas. Aparece na tela de emergência do app.
+  emergency24h       Boolean            @default(false) @map("emergency_24h")
   verificationStatus VerificationStatus @default(PENDING) @map("verification_status")
   // Última versão aprovada. A busca pública lê apenas este snapshot.
   publicProfile      Json?              @map("public_profile")

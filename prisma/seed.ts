@@ -98,6 +98,7 @@ async function main() {
         longitude: -34.9,
         responsibleVet: 'Dr. Carlos Veterinário',
         responsibleCrmv: '12345/PE',
+        emergency24h: true,
         verificationStatus: 'APPROVED',
       },
     });
@@ -115,6 +116,7 @@ async function main() {
           state: 'PE',
           latitude: -8.119,
           longitude: -34.9,
+          emergency24h: true,
         },
       },
     });
@@ -205,6 +207,7 @@ async function main() {
     },
     daysAhead: [1, 2, 5],
   });
+  await emergencyClinics();
 
   if (!(await prisma.user.findUnique({ where: { email: 'nova@vizipet.test' } }))) {
     const user = await prisma.user.create({
@@ -412,3 +415,60 @@ main()
     process.exitCode = 1;
   })
   .finally(() => prisma.$disconnect());
+
+// Hospitais de plantão sem dono no app: aparecem só na tela de emergência.
+async function emergencyClinics() {
+  const list = [
+    {
+      name: 'Hospital Veterinário Plantão 24h',
+      phone: '8130305050',
+      addressLine: 'Rua Real da Torre, 500',
+      neighborhood: 'Madalena',
+      city: 'Recife',
+      coords: [-8.0526, -34.9089],
+    },
+    {
+      name: 'Pronto Socorro Animal Olinda',
+      phone: '8134291010',
+      addressLine: 'Av. Getúlio Vargas, 1200',
+      neighborhood: 'Bairro Novo',
+      city: 'Olinda',
+      coords: [-8.0102, -34.8462],
+    },
+  ] as const;
+  for (const c of list) {
+    if (await prisma.clinic.findFirst({ where: { name: c.name } })) continue;
+    const clinic = await prisma.clinic.create({
+      data: {
+        name: c.name,
+        phone: c.phone,
+        addressLine: c.addressLine,
+        neighborhood: c.neighborhood,
+        city: c.city,
+        state: 'PE',
+        latitude: c.coords[0],
+        longitude: c.coords[1],
+        emergency24h: true,
+        verificationStatus: 'APPROVED',
+      },
+    });
+    await prisma.clinic.update({
+      where: { id: clinic.id },
+      data: {
+        publicProfile: {
+          id: clinic.id,
+          name: c.name,
+          description: 'Atendimento de urgência 24 horas, inclusive fins de semana e feriados.',
+          phone: c.phone,
+          address: `${c.addressLine}, ${c.neighborhood}, ${c.city}/PE`,
+          neighborhood: c.neighborhood,
+          city: c.city,
+          state: 'PE',
+          latitude: c.coords[0],
+          longitude: c.coords[1],
+          emergency24h: true,
+        },
+      },
+    });
+  }
+}

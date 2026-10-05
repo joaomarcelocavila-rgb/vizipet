@@ -165,7 +165,11 @@ export class SearchService {
 
   async searchClinics(query: SearchClinicsQuery) {
     if (query.skip >= MAX_OFFSET) throw badRequest('PAGE_TOO_DEEP', 'Refine a busca em vez de paginar tão fundo.');
+    if ((query.lat === undefined) !== (query.lng === undefined)) {
+      throw badRequest('VALIDATION_ERROR', 'Informe lat e lng juntos.');
+    }
     const where: Prisma.Sql[] = [Prisma.sql`c.verification_status = 'APPROVED'`];
+    if (query.emergency !== undefined) where.push(Prisma.sql`c.emergency_24h = ${query.emergency}`);
     if (query.city) where.push(like(Prisma.sql`c.city`, query.city));
     if (query.neighborhood) where.push(like(Prisma.sql`c.neighborhood`, query.neighborhood));
     if (query.q)
@@ -173,14 +177,28 @@ export class SearchService {
         Prisma.sql`(${like(Prisma.sql`c.name`, query.q)} OR ${like(Prisma.sql`c.city`, query.q)} OR ${like(Prisma.sql`c.neighborhood`, query.q)})`,
       );
     const whereSql = Prisma.join(where, ' AND ');
+    // Com localização, a mais próxima vem primeiro (é o que importa numa emergência).
+    const distance =
+      query.lat !== undefined && query.lng !== undefined
+        ? Prisma.sql`CASE WHEN c.latitude IS NULL OR c.longitude IS NULL THEN NULL ELSE
+            6371 * 2 * asin(sqrt(
+              power(sin(radians((c.latitude::float8 - ${query.lat}::float8) / 2)), 2) +
+              cos(radians(${query.lat}::float8)) * cos(radians(c.latitude::float8)) *
+              power(sin(radians((c.longitude::float8 - ${query.lng}::float8) / 2)), 2))) END`
+        : Prisma.sql`NULL::float8`;
     const [rows, total] = await Promise.all([
-      this.prisma.$queryRaw<{ id: string; public_profile: unknown }[]>`
-        SELECT c.id, c.public_profile FROM clinics c WHERE ${whereSql}
-         ORDER BY lower(f_unaccent(c.name)) ASC, c.id ASC LIMIT ${query.limit} OFFSET ${query.skip}`,
+      this.prisma.$queryRaw<
+        { id: string; public_profile: Record<string, unknown> | null; distance_km: number | null }[]
+      >`
+        SELECT c.id, c.public_profile, ${distance} AS distance_km FROM clinics c WHERE ${whereSql}
+         ORDER BY distance_km ASC NULLS LAST, lower(f_unaccent(c.name)) ASC, c.id ASC LIMIT ${query.limit} OFFSET ${query.skip}`,
       this.prisma.$queryRaw<{ total: bigint }[]>`SELECT count(*) AS total FROM clinics c WHERE ${whereSql}`,
     ]);
     return paginated(
-      rows.map((r) => r.public_profile ?? { id: r.id }),
+      rows.map((r) => ({
+        ...(r.public_profile ?? { id: r.id }),
+        ...(r.distance_km !== null ? { distanceKm: Math.round(r.distance_km * 10) / 10 } : {}),
+      })),
       query.page,
       query.limit,
       Number(total[0]?.total ?? 0),

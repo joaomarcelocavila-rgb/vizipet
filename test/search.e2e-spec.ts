@@ -91,6 +91,41 @@ describe('P4/P6 busca', () => {
     await search('sort=distance').expect(400);
   });
 
+  it('emergência lista só clínicas 24 h aprovadas, da mais próxima para a mais longe', async () => {
+    const clinic = (name: string, extra: Record<string, unknown>) =>
+      ctx.prisma.clinic.create({
+        data: {
+          name,
+          addressLine: 'Rua A, 10',
+          neighborhood: 'Centro',
+          city: 'Recife',
+          state: 'PE',
+          verificationStatus: 'APPROVED',
+          publicProfile: { name },
+          ...extra,
+        },
+      });
+    await clinic('Plantão Longe', { emergency24h: true, latitude: -8.2, longitude: -34.95 });
+    await clinic('Plantão Perto', { emergency24h: true, latitude: -8.06, longitude: -34.89 });
+    await clinic('Plantão Sem Mapa', { emergency24h: true });
+    await clinic('Clínica Comum', { latitude: -8.05, longitude: -34.88 });
+    await clinic('Plantão Pendente', { emergency24h: true, verificationStatus: 'PENDING' });
+
+    const res = await ctx.http().get('/api/v1/search/clinics?emergency=true&lat=-8.05&lng=-34.88').expect(200);
+    expect(res.body.data.map((c: { name: string }) => c.name)).toEqual([
+      'Plantão Perto',
+      'Plantão Longe',
+      'Plantão Sem Mapa',
+    ]);
+    expect(res.body.data[0].distanceKm).toBeLessThan(res.body.data[1].distanceKm);
+    expect(res.body.data[2].distanceKm).toBeUndefined();
+
+    const all = await ctx.http().get('/api/v1/search/clinics').expect(200);
+    expect(all.body.meta.total).toBe(4);
+    await ctx.http().get('/api/v1/search/clinics?lat=-8.05').expect(400);
+    await ctx.http().get('/api/v1/search/clinics?emergency=talvez').expect(400);
+  });
+
   it('pagina de forma estável, com limite máximo e sem paginação profunda', async () => {
     const { dog } = await createSpecies(ctx.prisma);
     for (let i = 0; i < 5; i++)
