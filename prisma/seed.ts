@@ -155,7 +155,255 @@ async function main() {
     await prisma.availabilitySlot.createMany({ data: slots });
   }
 
+  if (!(await prisma.pet.findFirst({ where: { ownerId: tutor.id, name: 'Mingau' } }))) {
+    await prisma.pet.create({
+      data: {
+        ownerId: tutor.id,
+        speciesId: cat.id,
+        name: 'Mingau',
+        breed: 'Siamês',
+        sex: 'MALE',
+        birthDate: new Date('2023-07-01'),
+      },
+    });
+  }
+
+  await extraProvider({
+    email: 'dermato@vizipet.test',
+    name: 'Dra. Lúcia Andrade',
+    specialty: 'Dermatologia',
+    bio: 'Alergias, otites e problemas de pele em cães e gatos.',
+    crmv: '23456',
+    city: 'Recife',
+    neighborhood: 'Graças',
+    coords: [-8.0476, -34.8986],
+    service: {
+      name: 'Consulta dermatológica',
+      modality: 'IN_PERSON',
+      durationMinutes: 40,
+      priceCents: 22000,
+      species: [dog.id, cat.id],
+    },
+    clinic: { name: 'Derma Pet Graças', addressLine: 'Rua das Graças, 210', phone: '8132221111' },
+    daysAhead: [1, 3, 4],
+  });
+  await extraProvider({
+    email: 'felinos@vizipet.test',
+    name: 'Dr. Rafael Moura',
+    specialty: 'Medicina felina',
+    bio: 'Atendimento exclusivo para gatos, também por vídeo.',
+    crmv: '34567',
+    city: 'Olinda',
+    neighborhood: 'Casa Caiada',
+    coords: [-8.0089, -34.8553],
+    service: {
+      name: 'Teleorientação felina',
+      modality: 'REMOTE',
+      durationMinutes: 20,
+      priceCents: 9000,
+      species: [cat.id],
+    },
+    daysAhead: [1, 2, 5],
+  });
+
+  if (!(await prisma.user.findUnique({ where: { email: 'nova@vizipet.test' } }))) {
+    const user = await prisma.user.create({
+      data: { email: 'nova@vizipet.test', name: 'Dra. Paula Nunes', role: 'PROFESSIONAL', passwordHash: NO_LOGIN },
+    });
+    const pending = await prisma.professional.create({
+      data: {
+        userId: user.id,
+        displayName: 'Dra. Paula Nunes',
+        specialty: 'Ortopedia',
+        crmvNumber: '45678',
+        crmvState: 'PE',
+        city: 'Jaboatão dos Guararapes',
+        neighborhood: 'Piedade',
+      },
+    });
+    // Metadados fictícios: os arquivos não existem no storage.
+    await prisma.verificationDocument.createMany({
+      data: [
+        {
+          professionalId: pending.id,
+          kind: 'CRMV',
+          storagePath: 'documents/seed-crmv.pdf',
+          originalName: 'crmv.pdf',
+          mimeType: 'application/pdf',
+          sizeBytes: 120000,
+        },
+        {
+          professionalId: pending.id,
+          kind: 'IDENTITY',
+          storagePath: 'documents/seed-rg.png',
+          originalName: 'rg.png',
+          mimeType: 'image/png',
+          sizeBytes: 340000,
+        },
+      ],
+    });
+    await prisma.verificationRequest.create({ data: { target: 'PROFESSIONAL', professionalId: pending.id } });
+  }
+
+  if ((await prisma.campaign.count()) === 0) {
+    const now = Date.now();
+    await prisma.campaign.createMany({
+      data: [
+        {
+          title: 'Vacinação antirrábica gratuita',
+          type: 'VACINACAO',
+          organization: 'Prefeitura do Recife',
+          audience: 'Cães e gatos a partir de 3 meses',
+          requirements: 'Levar o animal com coleira ou caixa de transporte',
+          location: 'Postos de vacinação em todos os distritos sanitários',
+          startsAt: new Date(now - 2 * 86400000),
+          endsAt: new Date(now + 20 * 86400000),
+          sourceUrl: 'https://www2.recife.pe.gov.br/',
+          sourceStatus: 'VALID',
+          status: 'PUBLISHED',
+          verifiedById: admin.id,
+          verifiedAt: new Date(),
+        },
+        {
+          title: 'Castração solidária',
+          type: 'CASTRACAO',
+          organization: 'Governo de Pernambuco',
+          audience: 'Tutores inscritos no CadÚnico',
+          requirements: 'Agendamento prévio e jejum de 8 horas',
+          location: 'Hospital Veterinário Público',
+          startsAt: new Date(now - 86400000),
+          endsAt: new Date(now + 40 * 86400000),
+          sourceUrl: 'https://www.pe.gov.br/',
+          sourceStatus: 'VALID',
+          status: 'PUBLISHED',
+          verifiedById: admin.id,
+          verifiedAt: new Date(),
+        },
+      ],
+    });
+  }
+
   console.log(`Seed concluído. admin=${admin.id} tutor=${tutor.id} vet=${vetUser.id}`);
+}
+
+interface ExtraProvider {
+  email: string;
+  name: string;
+  specialty: string;
+  bio: string;
+  crmv: string;
+  city: string;
+  neighborhood: string;
+  coords: [number, number];
+  service: {
+    name: string;
+    modality: 'IN_PERSON' | 'REMOTE';
+    durationMinutes: number;
+    priceCents: number;
+    species: string[];
+  };
+  clinic?: { name: string; addressLine: string; phone: string };
+  daysAhead: number[];
+}
+
+async function extraProvider(p: ExtraProvider) {
+  if (await prisma.user.findUnique({ where: { email: p.email } })) return;
+
+  const user = await prisma.user.create({
+    data: { email: p.email, name: p.name, role: 'PROFESSIONAL', passwordHash: NO_LOGIN },
+  });
+  const professional = await prisma.professional.create({
+    data: {
+      userId: user.id,
+      displayName: p.name,
+      specialty: p.specialty,
+      bio: p.bio,
+      crmvNumber: p.crmv,
+      crmvState: 'PE',
+      city: p.city,
+      neighborhood: p.neighborhood,
+      latitude: p.coords[0],
+      longitude: p.coords[1],
+      verificationStatus: 'APPROVED',
+    },
+  });
+  await prisma.professional.update({
+    where: { id: professional.id },
+    data: {
+      publicProfile: {
+        id: professional.id,
+        name: p.name,
+        specialty: p.specialty,
+        bio: p.bio,
+        crmv: `${p.crmv}/PE`,
+        city: p.city,
+        neighborhood: p.neighborhood,
+      },
+    },
+  });
+
+  let clinicId: string | null = null;
+  if (p.clinic) {
+    const clinic = await prisma.clinic.create({
+      data: {
+        ownerId: user.id,
+        name: p.clinic.name,
+        phone: p.clinic.phone,
+        addressLine: p.clinic.addressLine,
+        neighborhood: p.neighborhood,
+        city: p.city,
+        state: 'PE',
+        responsibleVet: p.name,
+        responsibleCrmv: `${p.crmv}/PE`,
+        verificationStatus: 'APPROVED',
+        professionals: { create: { professionalId: professional.id } },
+      },
+    });
+    await prisma.clinic.update({
+      where: { id: clinic.id },
+      data: {
+        publicProfile: {
+          id: clinic.id,
+          name: clinic.name,
+          phone: clinic.phone,
+          address: `${clinic.addressLine}, ${p.neighborhood}, ${p.city}/PE`,
+          neighborhood: p.neighborhood,
+          city: p.city,
+          state: 'PE',
+        },
+      },
+    });
+    clinicId = clinic.id;
+  }
+
+  const service = await prisma.service.create({
+    data: {
+      ownerId: user.id,
+      name: p.service.name,
+      modality: p.service.modality,
+      durationMinutes: p.service.durationMinutes,
+      priceCents: p.service.priceCents,
+      species: { create: p.service.species.map((speciesId) => ({ speciesId })) },
+      professionals: { create: { professionalId: professional.id } },
+    },
+  });
+
+  const slots = p.daysAhead.flatMap((days) => {
+    const day = new Date();
+    day.setUTCDate(day.getUTCDate() + days);
+    day.setUTCHours(17, 0, 0, 0); // 14h em Recife
+    return Array.from({ length: 4 }, (_, i) => {
+      const startsAt = new Date(day.getTime() + i * p.service.durationMinutes * 60000);
+      return {
+        professionalId: professional.id,
+        serviceId: service.id,
+        clinicId,
+        startsAt,
+        endsAt: new Date(startsAt.getTime() + p.service.durationMinutes * 60000),
+      };
+    });
+  });
+  await prisma.availabilitySlot.createMany({ data: slots });
 }
 
 main()

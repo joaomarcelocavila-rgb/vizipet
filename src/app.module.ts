@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { AvailabilityModule } from './availability/availability.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { ClinicsModule } from './clinics/clinics.module';
+import { DevModule } from './dev/dev.module';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 import { HealthController } from './health/health.controller';
 import { JobsModule } from './jobs/jobs.module';
@@ -47,6 +48,8 @@ import { VerificationModule } from './verification/verification.module';
     CampaignsModule,
     AdminModule,
     JobsModule,
+    // Nunca carregado fora de desenvolvimento: emite tokens sem senha.
+    ...(process.env.NODE_ENV === 'development' ? [DevModule] : []),
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

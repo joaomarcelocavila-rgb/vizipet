@@ -32,6 +32,19 @@ npm run dev:token -- vet@vizipet.test
 npm run dev:token -- admin@vizipet.test
 ```
 
+## Front de demonstração (`web/`)
+
+Telas simples em React + Vite que consomem a API: busca, perfil do profissional com agendamento, agenda (tutor e veterinário), notificações, campanhas, geração de horários e fila de verificação do admin. Serve para enxergar o back end funcionando; não substitui o protótipo oficial.
+
+```bash
+# com a API rodando em :3000 e NODE_ENV=development
+cd web
+npm ci
+npm run dev        # http://localhost:5173
+```
+
+A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/dev/login`. As rotas `/dev/*` (login sem senha e lista de pets do tutor) só existem com `NODE_ENV=development` e saem quando o AuthModule e o PetsModule do José entrarem. Para ver a notificação de confirmação aparecer, rode o job da Outbox (`POST /api/v1/internal/jobs/outbox`) ou suba a API com `INTERNAL_JOBS=true`.
+
 ## Verificação antes do PR
 
 ```bash
