@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, develop]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vizipet
+          POSTGRES_PASSWORD: vizipet
+          POSTGRES_DB: vizipet_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U vizipet"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://vizipet:vizipet@localhost:5432/vizipet_test
+      DIRECT_URL: postgresql://vizipet:vizipet@localhost:5432/vizipet_test
+      TEST_DATABASE_URL: postgresql://vizipet:vizipet@localhost:5432/vizipet_test
+      JWT_ACCESS_SECRET: ci-only-secret-not-used-anywhere-else
+      CRON_SECRET: ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx prisma validate
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx prisma migrate deploy
+      - run: npm run test:e2e
+      - run: npm run build
