@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
-import { isDemo } from './api';
+import { isDemo } from './lib/api';
 import { App } from './App';
 import './styles.css';
 

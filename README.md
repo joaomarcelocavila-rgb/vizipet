@@ -32,9 +32,14 @@ npm run dev:token -- vet@vizipet.test
 npm run dev:token -- admin@vizipet.test
 ```
 
-## Front de demonstração (`web/`)
+## App (`web/`)
 
-Telas simples em React + Vite que consomem a API: busca, perfil do profissional com agendamento, agenda (tutor e veterinário), notificações, campanhas, geração de horários e fila de verificação do admin. Serve para enxergar o back end funcionando; não substitui o protótipo oficial.
+App em React + Vite, feito primeiro para o celular (barra de navegação embaixo, folhas que sobem de baixo, alvos de toque grandes, tema escuro automático). Em telas largas a barra vira menu lateral. São três áreas, escolhidas pelo papel do usuário:
+
+- **Tutor**: início com a próxima consulta e os pets, busca com filtros rápidos e "perto de mim", perfil do profissional com agendamento, consultas (cancelar, rota até a clínica), campanhas e notificações.
+- **Emergência**: plantões 24h ordenados pela distância do celular, com botão de ligar, rota no Google Maps ou Waze e primeiros socorros. Funciona **sem login** (`/emergencia`).
+- **Clínica / veterinário**: agenda do dia, abertura de horários em lote, cadastro da clínica (com "atende urgência 24h" e localização no mapa), serviços, perfil profissional, documentos e pedido de verificação.
+- **Administração**: painel, análise de cadastros (documentos, aprovar, pedir correção, recusar), rede de clínicas e profissionais (suspender e reativar), campanhas e histórico de auditoria.
 
 ```bash
 # com a API rodando em :3000 e NODE_ENV=development
@@ -43,7 +48,9 @@ npm ci
 npm run dev        # http://localhost:5173
 ```
 
-A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/dev/login`. As rotas `/dev/*` (login sem senha e lista de pets do tutor) só existem com `NODE_ENV=development` e saem quando o AuthModule e o PetsModule do José entrarem. `npm run build:demo` gera `web/dist-demo/index.html`, um arquivo único que roda sem API: um back end simulado no navegador reproduz as regras principais com os dados do seed. Serve para mostrar o produto a quem não vai instalar nada.
+A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/dev/login`. As rotas `/dev/*` (login sem senha e lista de pets do tutor) só existem com `NODE_ENV=development` e saem quando o AuthModule e o PetsModule do José entrarem. `npm run build:demo` gera `web/dist-demo/index.html`, um arquivo único que roda sem API: um back end simulado no navegador reproduz as regras principais. Serve para mostrar o produto a quem não vai instalar nada.
+
+Clínicas com `emergency24h = true` aparecem em `GET /api/v1/search/clinics?emergency=true&lat=..&lng=..`, da mais próxima para a mais distante. Ligar ou desligar esse campo numa clínica aprovada manda a clínica de volta para análise.
 
 Para ver a notificação de confirmação aparecer, rode o job da Outbox (`POST /api/v1/internal/jobs/outbox`) ou suba a API com `INTERNAL_JOBS=true`.
 

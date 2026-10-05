@@ -1,4 +1,4 @@
-import { session } from '../api';
+import { session } from '../lib/api';
 
 export function DemoBanner() {
   async function restart() {
@@ -10,10 +10,8 @@ export function DemoBanner() {
 
   return (
     <div className="demo-banner">
-      <span>
-        <strong>Demonstração.</strong> Os dados são fictícios e ficam só neste navegador; nada é enviado para um servidor.
-      </span>
-      <button type="button" onClick={restart}>Recomeçar do zero</button>
+      <span><strong>Demonstração</strong> · dados fictícios, só neste aparelho</span>
+      <button type="button" onClick={restart}>Recomeçar</button>
     </div>
   );
 }

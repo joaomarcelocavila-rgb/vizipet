@@ -227,7 +227,11 @@ export class AdminService {
           action: target === 'SUSPENDED' ? 'PROVIDER_SUSPENDED' : 'PROVIDER_REINSTATED',
           entityType: isProfessional ? 'Professional' : 'Clinic',
           entityId: id,
-          metadata: { reason },
+          // O nome vai junto para o painel listar os suspensos sem outra consulta.
+          metadata: {
+            reason,
+            name: isProfessional ? (entity as { displayName: string }).displayName : (entity as { name: string }).name,
+          },
         },
         tx,
       );
