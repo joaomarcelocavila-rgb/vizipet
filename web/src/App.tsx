@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { Page, SessionUser, api, session } from './api';
+import { Page, SessionUser, api, isDemo, session } from './api';
+import { DemoBanner } from './components/DemoBanner';
 import { Admin } from './pages/Admin';
 import { Agenda } from './pages/Agenda';
 import { Campaigns } from './pages/Campaigns';
@@ -18,10 +19,13 @@ export function App() {
 
   if (!user) {
     return (
+      <>
+      {isDemo && <DemoBanner />}
       <Routes>
         <Route path="/entrar" element={<Login onLogin={setUser} />} />
         <Route path="*" element={<Navigate to="/entrar" replace />} />
       </Routes>
+      </>
     );
   }
 
@@ -29,6 +33,7 @@ export function App() {
 
   return (
     <div className="shell">
+      {isDemo && <DemoBanner />}
       <Header user={user} onLogout={() => { session.clear(); setUser(null); }} key={location.pathname} />
       <main className="main">
         <Routes>
@@ -42,7 +47,7 @@ export function App() {
           <Route path="*" element={<Navigate to={home} replace />} />
         </Routes>
       </main>
-      <footer className="footer">Vizipet · ambiente de desenvolvimento · horários em Recife (UTC−3)</footer>
+      <footer className="footer">Vizipet · horários no fuso de Recife (UTC−3)</footer>
     </div>
   );
 }

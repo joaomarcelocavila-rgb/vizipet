@@ -18,25 +18,64 @@ export interface SessionUser {
   role: 'TUTOR' | 'PROFESSIONAL' | 'ADMIN';
 }
 
-export const session = {
-  get token() {
-    return localStorage.getItem(TOKEN_KEY);
+// localStorage pode estar bloqueado (aba anônima, iframe): cai para memória.
+const memory = new Map<string, string>();
+const store = {
+  get: (key: string) => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return memory.get(key) ?? null;
+    }
   },
-  get user(): SessionUser | null {
-    const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+  set: (key: string, value: string) => {
+    memory.set(key, value);
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      /* fica só em memória */
+    }
   },
-  save(token: string, user: SessionUser) {
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-  },
-  clear() {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  remove: (key: string) => {
+    memory.delete(key);
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      /* ignora */
+    }
   },
 };
 
+export const session = {
+  get token() {
+    return store.get(TOKEN_KEY);
+  },
+  get user(): SessionUser | null {
+    const raw = store.get(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  },
+  save(token: string, user: SessionUser) {
+    store.set(TOKEN_KEY, token);
+    store.set(USER_KEY, JSON.stringify(user));
+  },
+  clear() {
+    store.remove(TOKEN_KEY);
+    store.remove(USER_KEY);
+  },
+};
+
+export const isDemo = import.meta.env.VITE_DEMO === '1';
+
 async function request<T>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<T> {
+  if (isDemo) {
+    const { demoRequest } = await import('./demo/mock');
+    const result = await demoRequest(method, path, body as Record<string, unknown> | undefined, headers, session.token);
+    if (result.status >= 400) {
+      if (result.status === 401) session.clear();
+      throw { status: result.status, code: result.body?.code, message: result.body?.message } as ApiError;
+    }
+    return result.body as T;
+  }
   const res = await fetch(`/api/v1${path}`, {
     method,
     headers: {

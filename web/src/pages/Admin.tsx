@@ -30,11 +30,18 @@ export function Admin() {
   };
   useEffect(load, []);
 
+  const [asking, setAsking] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+  const [flash, setFlash] = useState('');
+
   async function decide(r: Request, decision: string) {
-    const reason = decision === 'APPROVE' ? undefined : window.prompt('Justificativa (o profissional vai ver):')?.trim();
-    if (decision !== 'APPROVE' && !reason) return;
+    const trimmed = reason.trim();
+    if (decision !== 'APPROVE' && !trimmed) return;
     try {
-      await api.post(`/admin/verification-requests/${r.id}/decision`, { decision, ...(reason ? { reason } : {}) });
+      await api.post(`/admin/verification-requests/${r.id}/decision`, { decision, ...(decision !== 'APPROVE' ? { reason: trimmed } : {}) });
+      setAsking(null);
+      setReason('');
+      setFlash(decision === 'APPROVE' ? `${r.subject?.name} aprovado(a). O perfil já aparece na busca.` : 'Correção pedida. O profissional recebe a justificativa.');
       load();
     } catch (e) {
       setError(e as ApiError);
@@ -44,6 +51,7 @@ export function Admin() {
   return (
     <>
       <h1>Verificação</h1>
+      {flash && <p className="flash">{flash}</p>}
       <ErrorNote error={error} />
       {!requests ? (
         <Loading />
@@ -59,8 +67,20 @@ export function Admin() {
               </div>
               <div className="actions">
                 <button className="btn" onClick={() => decide(r, 'APPROVE')}>Aprovar</button>
-                <button className="btn btn-ghost" onClick={() => decide(r, 'REQUEST_CHANGES')}>Pedir correção</button>
+                <button className="btn btn-ghost" onClick={() => { setAsking(r.id); setReason(''); }}>Pedir correção</button>
               </div>
+              {asking === r.id && (
+                <div className="confirm">
+                  <label htmlFor={`just-${r.id}`}>
+                    Justificativa (o profissional vai ver)
+                    <input id={`just-${r.id}`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ex.: foto do CRMV ilegível" autoFocus />
+                  </label>
+                  <div className="confirm-actions">
+                    <button className="btn btn-ghost" onClick={() => setAsking(null)}>Voltar</button>
+                    <button className="btn" onClick={() => decide(r, 'REQUEST_CHANGES')} disabled={!reason.trim()}>Enviar pedido de correção</button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -70,6 +90,7 @@ export function Admin() {
       {!campaigns ? (
         <Loading />
       ) : (
+        <div className="table-wrap">
         <table className="table">
           <thead>
             <tr><th>Campanha</th><th>Órgão</th><th>Fonte</th><th>Situação</th></tr>
@@ -85,6 +106,7 @@ export function Admin() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </>
   );

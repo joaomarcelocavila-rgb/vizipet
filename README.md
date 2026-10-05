@@ -43,7 +43,9 @@ npm ci
 npm run dev        # http://localhost:5173
 ```
 
-A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/dev/login`. As rotas `/dev/*` (login sem senha e lista de pets do tutor) só existem com `NODE_ENV=development` e saem quando o AuthModule e o PetsModule do José entrarem. Para ver a notificação de confirmação aparecer, rode o job da Outbox (`POST /api/v1/internal/jobs/outbox`) ou suba a API com `INTERNAL_JOBS=true`.
+A tela de entrada lista os usuários do seed e emite um token via `POST /api/v1/dev/login`. As rotas `/dev/*` (login sem senha e lista de pets do tutor) só existem com `NODE_ENV=development` e saem quando o AuthModule e o PetsModule do José entrarem. `npm run build:demo` gera `web/dist-demo/index.html`, um arquivo único que roda sem API: um back end simulado no navegador reproduz as regras principais com os dados do seed. Serve para mostrar o produto a quem não vai instalar nada.
+
+Para ver a notificação de confirmação aparecer, rode o job da Outbox (`POST /api/v1/internal/jobs/outbox`) ou suba a API com `INTERNAL_JOBS=true`.
 
 ## Verificação antes do PR
 

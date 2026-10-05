@@ -41,16 +41,16 @@ export function Agenda({ role }: { role: 'TUTOR' | 'PROFESSIONAL' | 'ADMIN' }) {
 
   useEffect(load, [load]);
 
+  const [cancelling, setCancelling] = useState<string | null>(null);
+  const [reason, setReason] = useState('');
+
   async function cancel(a: Appointment) {
-    let reason: string | undefined;
-    if (role === 'PROFESSIONAL') {
-      reason = window.prompt('Motivo do cancelamento (o tutor vai receber):')?.trim();
-      if (!reason) return;
-    } else if (!window.confirm(`Cancelar ${a.snapshot.serviceName} de ${a.snapshot.petName}?`)) {
-      return;
-    }
+    const trimmed = reason.trim();
+    if (role === 'PROFESSIONAL' && !trimmed) return;
     try {
-      await api.post(`/appointments/${a.id}/cancel`, reason ? { reason } : {});
+      await api.post(`/appointments/${a.id}/cancel`, trimmed ? { reason: trimmed } : {});
+      setCancelling(null);
+      setReason('');
       setFlash('Consulta cancelada e horário liberado.');
       load();
     } catch (e) {
@@ -103,13 +103,31 @@ export function Agenda({ role }: { role: 'TUTOR' | 'PROFESSIONAL' | 'ADMIN' }) {
               </div>
               <div className="actions">
                 <Status value={a.status} />
-                {a.status === 'CONFIRMED' && new Date(a.startsAt) > new Date() && (
-                  <button className="btn btn-ghost" onClick={() => cancel(a)}>Cancelar</button>
+                {a.status === 'CONFIRMED' && new Date(a.startsAt) > new Date() && cancelling !== a.id && (
+                  <button className="btn btn-ghost" onClick={() => { setCancelling(a.id); setReason(''); }}>Cancelar</button>
                 )}
                 {a.status === 'CONFIRMED' && role === 'PROFESSIONAL' && new Date(a.startsAt) <= new Date() && (
                   <button className="btn btn-ghost" onClick={() => complete(a)}>Concluir</button>
                 )}
               </div>
+              {cancelling === a.id && (
+                <div className="confirm">
+                  {role === 'PROFESSIONAL' ? (
+                    <label htmlFor={`reason-${a.id}`}>
+                      Motivo (o tutor vai receber)
+                      <input id={`reason-${a.id}`} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Ex.: emergência na clínica" autoFocus />
+                    </label>
+                  ) : (
+                    <span>Cancelar {a.snapshot.serviceName} de {a.snapshot.petName}? O horário volta a ficar livre.</span>
+                  )}
+                  <div className="confirm-actions">
+                    <button className="btn btn-ghost" onClick={() => setCancelling(null)}>Voltar</button>
+                    <button className="btn btn-danger" onClick={() => cancel(a)} disabled={role === 'PROFESSIONAL' && !reason.trim()}>
+                      Confirmar cancelamento
+                    </button>
+                  </div>
+                </div>
+              )}
             </li>
           ))}
         </ul>

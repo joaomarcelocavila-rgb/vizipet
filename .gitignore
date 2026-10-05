@@ -6,3 +6,4 @@ src/generated
 *.tsbuildinfo
 .DS_Store
 .storage
+dist-demo
